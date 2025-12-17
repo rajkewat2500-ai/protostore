@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK SELLER - NOTPROTO</title>
+    <style>
+        /* --- CSS Styles --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; padding-bottom: 50px; }
+        
+        /* Header */
+        header { background-color: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        h1 { margin: 0; font-size: 22px; }
+        
+        /* Cart Button */
+        .cart-btn { background-color: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; }
+        .cart-count { background: white; color: #e74c3c; border-radius: 50%; padding: 2px 8px; font-size: 12px; margin-left: 8px; font-weight: bold; }
+
+        /* Container */
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        
+        /* Product Card */
+        .product-card { background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+        .product-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; background-color: #eee; margin-bottom: 10px; }
+        .product-title { font-size: 18px; margin: 10px 0; color: #333; font-weight: 600; }
+        .product-price { font-size: 20px; color: #27ae60; font-weight: bold; margin-bottom: 15px; }
+        
+        /* FIXED BUTTON STYLE */
+        .add-btn { 
+            background-color: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            width: 100%; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: background 0.2s; 
+        }
+        .add-btn:hover { background-color: #2980b9; }
+        .add-btn:active { transform: scale(0.98); }
+
+        /* Modal (Popup) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background-color: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #888; font-weight: bold; }
+        .close-btn:hover { color: #333; }
+        
+        /* Cart List */
+        #cart-items-list { list-style: none; padding: 0; text-align: left; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        #cart-items-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
+        .total-price { font-size: 22px; font-weight: bold; color: #333; margin: 20px 0; border-top: 2px solid #eee; padding-top: 10px; }
+
+        /* Payment UI */
+        #qr-image { width: 220px; height: 220px; margin: 15px auto; display: block; border: 1px solid #ddd; padding: 5px; background: white; }
+        .pay-btn { background-color: #27ae60; color: white; padding: 14px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        .pay-btn:hover { background-color: #219150; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>APK SELLING</h1>
+        <button class="cart-btn" onclick="openCart()">
+            🛒 Cart <span class="cart-count" id="cart-count">0</span>
+        </button>
+    </header>
+
+    <div class="container">
+        <h2 style="margin-bottom: 20px; color: #444;">Products</h2>
+        <div class="product-grid" id="product-list">
+            </div>
+    </div>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            
+            <div id="cart-view">
+                <h3>Your Shopping Cart</h3>
+                <ul id="cart-items-list">
+                    <li>Cart is empty...</li>
+                </ul>
+                <div class="total-price">Total: ₹<span id="grand-total">0</span></div>
+                <button class="pay-btn" onclick="showPayment()" id="checkout-btn" style="background-color: #3498db; display: none;">Proceed to Pay</button>
+            </div>
+
+            <div id="payment-view" class="hidden">
+                <h3>Scan to Pay</h3>
+                <p style="font-size: 18px; margin: 5px 0;">Amount: <strong>₹<span id="pay-amount">0</span></strong></p>
+                
+                <img id="qr-image" src="" alt="Generating QR...">
+                
+                <p style="font-size: 13px; color: #555; background: #eee; padding: 5px; border-radius: 4px; display: inline-block;">UPI: kewat25@fam</p>
+                
+                <button class="pay-btn" onclick="paymentDone()">I Have Paid (Confirm)</button>
+                <button onclick="backToCart()" style="margin-top:15px; background:none; border:none; color:#3498db; cursor:pointer; text-decoration: underline;">Back to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Product Data ---
+        const products = [
+            { id: 1, name: "F@MPAY", price: 120, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXkQCZ3GUYUokk2c6Ob9OuvVzzguomaK5MeA&usqp=CAU" },
+            { id: 2, name: "New GPAY", price: 199, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxXkFH2pOc0R73Jc6NgKyA5Ffdt2820Pt0UwJpDSRQ99Br0cuF6P6a0Us&s=10" },
+            { id: 3, name: "phonepe", price: 230, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnrx40iOYx_VsUKnW56dOaxcsb2aZXWnopIjFl5HHsXIjw62pbHdu9OtA&s=10" },
+            { id: 4, name: "Navi pay", price: 99, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKU47HQfObhtFiw9oJPAy1D37D_r8Jj7JXahLXpOtP8IygoKDZjvQ_KGA&s=10" },
+            { id: 5, name: "Paytm", price: 160, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5nUtP3-0Po39MyIMEofgmA4GxKhRbhNC6MA&s" },
+            { id: 6, name: "Bhimpay", price: 80, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSh2cxvaQ0MBIF6UU-Rqwy4jc13a6uwyS9PF7m306ni9Q&s=10" },
+            { id: 7, name: "Superpay", price: 90, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqL26qKlEbQDb25Ayc6kV8n_PvyeMBsp4mhUjVxRdE8A&s=10" },
+            { id: 8, name: "mobikwik", price: 120, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRSHAEpHU3JFM1z28b3MDIUcfDT95kdnUf1OR_Kw2a9GR6A00tH5CuBNQ&s" },
+            { id: 9, name: "Fake money received sms", price: 70, img: "data:image/png;base64,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" },
+            { id: 10, name: "call bomber", price: 20, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmWR4A-x9Q6-e4i1fJNwJ5OC4WACptuKYUsjAgBC5TNA&s=10" }
+        ];
+
+        let cart = [];
+
+        // --- 2. Initialize App ---
+        function init() {
+            const productContainer = document.getElementById('product-list');
+            
+            // Loop through products and create HTML
+            let htmlContent = '';
+            products.forEach(product => {
+                htmlContent += `
+                    <div class="product-card">
+                        <img src="${product.img}" alt="${product.name}" class="product-img">
+                        <div class="product-title">${product.name}</div>
+                        <div class="product-price">₹${product.price}</div>
+                        <button class="add-btn" onclick="addToCart(${product.id})">Add to Cart</button>
+                    </div>
+                `;
+            });
+            productContainer.innerHTML = htmlContent;
+        }
+
+        // --- 3. Add to Cart Logic ---
+        window.addToCart = function(id) {
+            const product = products.find(p => p.id === id);
+            
+            if (product) {
+                cart.push(product);
+                updateCartUI();
+                
+                // Optional: Simple visual feedback
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = "Added ✔";
+                btn.style.backgroundColor = "#27ae60";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "#3498db";
+                }, 1000);
+            }
+        };
+
+        function updateCartUI() {
+            // Update Count Badge
+            document.getElementById('cart-count').innerText = cart.length;
+            
+            const cartList = document.getElementById('cart-items-list');
+            const totalEl = document.getElementById('grand-total');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            if(cart.length === 0) {
+                cartList.innerHTML = '<li>Your cart is empty</li>';
+                totalEl.innerText = '0';
+                checkoutBtn.style.display = 'none';
+            } else {
+                let total = 0;
+                // Create list items
+                const listItems = cart.map((item, index) => {
+                    total += item.price;
+                    // Add a remove button logic if needed, keeping simple for now
+                    return `<li>
+                                <span>${index + 1}. ${item.name}</span> 
+                                <span>₹${item.price}</span>
+                            </li>`;
+                }).join('');
+                
+                cartList.innerHTML = listItems;
+                totalEl.innerText = total;
+                checkoutBtn.style.display = 'block';
+            }
+        }
+
+        // --- 4. Modal Logic ---
+        window.openCart = function() {
+            document.getElementById('cart-modal').style.display = 'flex';
+            document.getElementById('cart-view').classList.remove('hidden');
+            document.getElementById('payment-view').classList.add('hidden');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('cart-modal').style.display = 'none';
+        };
+
+        // Close modal if clicked outside content
+        window.onclick = function(event) {
+            const modal = document.getElementById('cart-modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        };
+
+        // --- 5. Payment Logic ---
+        window.showPayment = function() {
+            let totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+            if (totalAmount === 0) return;
+
+            // Generate UPI Link
+            const upiLink = `upi://pay?pa=kewat25@fam&pn=MyStore&am=${totalAmount}&cu=INR`;
+            // Encode for URL
+            const encodedUPI = encodeURIComponent(upiLink);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodedUPI}&size=200x200`;
+
+            document.getElementById('pay-amount').innerText = totalAmount;
+            document.getElementById('qr-image').src = qrUrl;
+
+            document.getElementById('cart-view').classList.add('hidden');
+            document.getElementById('payment-view').classList.remove('hidden');
+        };
+
+        window.backToCart = function() {
+            document.getElementById('cart-view').classList.remove('hidden');
+            document.getElementById('payment-view').classList.add('hidden');
+        };
+
+        window.paymentDone = function() {
+            window.location.href = "https://t.me/NOTPROTO";
+        };
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
